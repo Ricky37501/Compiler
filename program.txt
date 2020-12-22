@@ -1,8 +1,5 @@
-void main()
-{
-	int a=10;
-	int b=20;
-	while (a1+1*temp > c+d){
-		result=b-(h1+h2)/k1;
+void main(){
+	while (a+1> b){
+		ret=b-a;
 	}
 }

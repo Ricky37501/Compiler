@@ -27,20 +27,22 @@ public:
 
 #ifndef DESIGN
 	//分析文法：
+	//first(S)={ i }
 	//first(E)=first(T)=first(F)={ i , ( }
 	//first(E')={+, -, ε}
 	//first(T')={*, /, ε}
-	//follow(E)=follow(E')={ ) }
-	//follow(T)=follow(T')={+, - , )}
-	//follow(F)={+,/}
+	//follow(S)={ # }
+	//follow(E)=follow(E')={ ), # }
+	//follow(T)=follow(T')={+, - , ) , #}
+	//follow(F)={+, / , ), #}
 
 	//select（S→i = E）={ i }
 	//select（E→TE′）={ i , ( }
-	//select（E'->-TE′ | +TE' ）={ + , - }
-	//select（E'->ε）={ ) }
+	//select（E'→-TE′ | +TE' ）={ + , - }
+	//select（E'->ε）={ ) ,# }
 	//select（T→FT′）={ i , ( }
 	//select（T′→* FT′ | /FT' ）={* , /}
-	//select（T′→ε）={+,-, )}
+	//select（T′→ε）={+,-, ) , #}
 	//select（F→(E) | i）={ ( , i }
 
 	//非终结符处理程序
@@ -57,35 +59,58 @@ public:
 	//F→(E) | i
 	void doF(vector<Word>::iterator& i);
 #else
-	//四元式：OP为操作符，result=arg1+arg2;
-	struct Siyuanshi {
-		string op;
-		string arg1;
-		string arg2;
-		string result;
-	};
-	Siyuanshi mSiyuanshi[100];
-	int mSiyuanshiNum = 0;//四元式个数
-	int mJumpType = 0;
+	//分析文法:
+	//first(S)={ while }
+	//first(A)=first(E)=first(T)=first(F)={ ( , i } 
+	//first(D)={ <,> }
+	//first(B) = { i }
+	//first(E')={+, -, ε}
+	//first(T')={*, /, ε}
+	//follow(S)={ # }
+	//follow(A)={ ) }
+	//follow(D) = { (，i }
+	//follow(B)={ } }
+	//follow(E)=follow(E')={  ) ,<,>, } }
+	//follow(T)=follow(T')={ +,-, ) , <,>, } }
+	//follow(F)={ *, / ,+, - , ) , <,>, }}
+
+	//select(S→while(A){B})={ while( }
+	//select (A→EDE)={ ( , i }
+	//select (R→< | >)={ <,> }
+	//select (B→i=E)={ i }
+	//select (E→TE')={ ( , i }
+
+	//select (E' → +TE')={ + }
+	//select (E' →| -TE')={ - }
+	//select (E' → ε)={ ) ,<,>, }, ; }
+
+	//select (T→FT')={ (, i }
+
+	//select (T′→  /FT')={ / }
+	//select (T′→*FT' ')={ * }
+	//select (T′→ε)={ +,-, ) , <,>, } , ; }
+
+	//select (F→ i）={ i}
+	//select (F→(E)）={ ( }
 
 	//S->while(A){B}
 	void doS(vector<Word>::iterator& i);
-	//A->CDC
+	//A→ERE
 	void doA(vector<Word>::iterator& i);
-	//D->优先关系
-	void doD(vector<Word>::iterator& i, string& tempD);
-	//B->i=C;						//B->i=E
+	//R→< | >
+	void doR(vector<Word>::iterator& i, string& tempR);
+	//B→i=E
 	void doB(vector<Word>::iterator& i);
-	//C-> EG						//E->TE'
-	void doC(vector<Word>::iterator& i, string& tempC);
-	//E -> FH						//T->FT'
-	void doE(vector<Word>::iterator& i, string& tempE);
-	//G -> +EG | -EG | ε		//E' -> +TE' | -TE' | ε
-	void doG(vector<Word>::iterator& i, queue<string>& tempG);
-	//F -> (C) | i | n				//F -> (E) | i 
+	//E→TE'
+	void doE(vector<Word>::iterator& i, string& tempC);
+	//T→FT'
+	void doT(vector<Word>::iterator& i, string& tempT);
+	//E' → +TE' | -TE' | ε
+	void doE_(vector<Word>::iterator& i, queue<string>& tempE_);
+	//F → (E) | i 
 	void doF(vector<Word>::iterator& i, string& tempF);
-	//H -> *FH | /FH | ε		//T' -> *FT' | /FT' | ε
-	void doH(vector<Word>::iterator& i, queue<string>& tempH);
+	//T' → *FT' | /FT' | ε
+	void doT_(vector<Word>::iterator& i, queue<string>& tempT);
 #endif // DESIGN
 
 	//执行词法分析
@@ -93,9 +118,23 @@ public:
 	//执行语法分析
 	void GrammaticalAnalysis();
 
+	//四元式：OP为操作符，result=arg1+arg2;
+	struct Siyuanshi {
+		string op;
+		string arg1;
+		string arg2;
+		string result;
+	};
+	Siyuanshi m4[100];
+	int m4Num = 0;//四元式个数
+	//记录回填位置
+	//记录执行完毕跳转的位置
+	int mJumpOccupy1 = 0;
+	//记录符合A跳转的位置
+	int mJumpOccupy2 = 0;
+
 	vector<Word> mWords;//存放单词
 private:
-
 	string mKeyWord[9] = {"int","double","float","void","return","if","for","while","else"};//设置关键字
 	char* mProgram;//源程序
 	int mSize;//源程序长度

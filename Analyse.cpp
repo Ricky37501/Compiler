@@ -24,7 +24,6 @@ Analyse::Analyse() :
 {
 }
 
-
 Analyse::~Analyse()
 {
 }
@@ -252,224 +251,292 @@ void Analyse::doS(vector<Word>::iterator& i) {
 	if (i->getValue() == "while" && (i + 1)->getValue() == "(") {
 		i += 2;
 		doA(i);
+		if (mFlag == false || i == mWords.end()) {
+			mFlag = false;
+			return;
+		}
 	}
 	else {
-		cout << "单词while拼写错误或者缺少左括号！" << endl;
+		cout << "ERROR:非法关键字 或 缺失“(”" << endl;
 		mFlag = false;
 		return;
 	}
 	if (i->getValue() == ")" && (i + 1)->getValue() == "{") {
 		i += 2;
 		doB(i);
+		if (mFlag == false || i==mWords.end()) {
+			mFlag = false;
+			return;
+		}
 	}
 	else {
-		cout << "缺少右括号“（”或者缺少左花括号“{”！" << endl;
+		cout << " ERROR : 缺少“）”或“{”" << endl;
 		mFlag = false;
 		return;
+	}
+	if (i->getValue() != "}" ) {
+		cout << "ERROR : 缺少“}”" << endl;
+		mFlag = false;
 	}
 }
 
 void Analyse::doA(vector<Word>::iterator& i) {
-	string tempD;
-	string tempC1;
-	string tempC2;
-	doC(i, tempC1);
-	doD(i, tempD);
-	doC(i, tempC2);
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	string op_R;
+	string arg_1;
+	string arg_2;
+	doE(i, arg_1);
+	doR(i, op_R);
+	doE(i, arg_2);
 
-	mSiyuanshi[mSiyuanshiNum].op = tempD;
-	mSiyuanshi[mSiyuanshiNum].arg1 = tempC1;
-	mSiyuanshi[mSiyuanshiNum].arg2 = tempC2;
-	mSiyuanshi[mSiyuanshiNum].result = "T" + to_string(mSiyuanshiNum + 1);
-	mSiyuanshiNum++;
-
-	mSiyuanshi[mSiyuanshiNum].op = "Jump";
-	mJumpType = mSiyuanshiNum;
-	mSiyuanshiNum++;
+	m4[m4Num].op = "jump"+op_R;
+	m4[m4Num].arg1 = arg_1;
+	m4[m4Num].arg2 = arg_2;
+	mJumpOccupy2 = m4Num;
+	m4Num++;
+	m4[m4Num].op = "jump";
+	mJumpOccupy1 = m4Num;
+	m4Num++;
 }
 
-void Analyse::doD(vector<Word>::iterator& i, string& tempD) {
-	tempD = i->getValue();
-	i++;
+void Analyse::doR(vector<Word>::iterator& i, string& op_R) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	if (i->getValue() == "<" || i->getValue() == ">"){
+		op_R = i->getValue();
+		i++;
+	}
+	else {
+		mFlag = false;
+		cout << "ERROR : 非法关系运算符" << endl;
+	}
 }
 
 void Analyse::doB(vector<Word>::iterator& i) {
-	string tempC;
-	string tempResult, tempDengyu;
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	string id_E;
+	string id;
 	if (i->getType() == Word::Type::IDENTIFIER) {
-		tempResult = i->getValue();
+		id = i->getValue();
 		i++;
 	}
 	else {
+		mFlag = false;
+		cout << "ERROR : 赋值符左侧应为可改变的左值" << endl;
 		return;
 	}
 	if (i->getValue() == "=") {
-		tempDengyu = i->getValue();
 		i++;
 	}
 	else {
+		mFlag = false;
+		cout << "ERROR : 缺少赋值符 "<<endl;
 		return;
 	}
-	doC(i, tempC);
-	mSiyuanshi[mSiyuanshiNum].op = tempDengyu;
-	mSiyuanshi[mSiyuanshiNum].arg1 = tempC;
-	mSiyuanshi[mSiyuanshiNum].result = tempResult;
-	mSiyuanshiNum++;
-
-	mSiyuanshi[mSiyuanshiNum].op = "Jump";
-	mSiyuanshi[mSiyuanshiNum].result = "0";// to_string(JumpType);
-	mSiyuanshiNum++;
-
-	mSiyuanshi[mJumpType].result = to_string(mSiyuanshiNum);
-}
-
-void Analyse::doC(vector<Word>::iterator& i, string& tempC) {
-	string tempE;
-	queue<string> tempG;
-
-	int temp = 0;
-	doE(i, tempE);
-	doG(i, tempG);
-
-	if (!tempG.empty()) {
-		while (!tempG.empty()) {
-			if (temp == 0) {
-				mSiyuanshi[mSiyuanshiNum].arg1 = tempE;
-				mSiyuanshi[mSiyuanshiNum].op = tempG.front();
-				tempG.pop();
-				mSiyuanshi[mSiyuanshiNum].arg2 = tempG.front();
-				tempG.pop();
-				mSiyuanshi[mSiyuanshiNum].result = "T" + to_string(mSiyuanshiNum + 1);
-				mSiyuanshiNum++;
-				temp++;
-			}
-			else {
-				mSiyuanshi[mSiyuanshiNum].arg1 = mSiyuanshi[mSiyuanshiNum - 1].result;
-				mSiyuanshi[mSiyuanshiNum].op = tempG.front();
-				tempG.pop();
-				mSiyuanshi[mSiyuanshiNum].arg2 = tempG.front();
-				tempG.pop();
-				mSiyuanshi[mSiyuanshiNum].result = "T" + to_string(mSiyuanshiNum + 1);
-				mSiyuanshiNum++;
-				temp++;
-			}
-		}
-		tempC = mSiyuanshi[mSiyuanshiNum - 1].result;
+	doE(i, id_E);
+	if (i->getValue() == ";") {
+		i++;
 	}
 	else {
-		tempC = tempE;
+		mFlag = false;
+		cout << "ERROR : 缺少 “;”" << endl;
+		return;
 	}
+	m4[mJumpOccupy2].result = to_string(m4Num-1);
+	m4[m4Num].op = "=";
+	m4[m4Num].arg1 = id_E;
+	m4[m4Num].result = id;
+	m4Num++;
+
+	m4[m4Num].op = "jump";
+	m4[m4Num].result = "0";
+	m4Num++;
+
+	m4[mJumpOccupy1].result = to_string(m4Num);
 }
 
-void Analyse::doE(vector<Word>::iterator& i, string& tempE) {
-	string tempF;
-	doF(i, tempF);
-
-	queue<string> tempH;
-	doH(i, tempH);
-	int temp = 0;
-	if (!tempH.empty()) {
-		while (!tempH.empty()) {
-			if (temp == 0) {
-				mSiyuanshi[mSiyuanshiNum].arg1 = tempF;
-				mSiyuanshi[mSiyuanshiNum].op = tempH.front();
-				tempH.pop();
-				mSiyuanshi[mSiyuanshiNum].arg2 = tempH.front();
-				tempH.pop();
-				mSiyuanshi[mSiyuanshiNum].result = "T" + to_string(mSiyuanshiNum + 1);
-				mSiyuanshiNum++;
-				temp++;
+void Analyse::doE(vector<Word>::iterator& i, string& id_E) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	string id_T;
+	queue<string> expr_E_;
+	if (i->getValue() == "(" || i->getType() == Word::IDENTIFIER) {
+		doT(i, id_T);
+		doE_(i, expr_E_);
+		bool isFirst = true;
+		if (!expr_E_.empty()) {
+			while (!expr_E_.empty()) {
+				if (isFirst) { //  id_T   op   arg   T?
+					isFirst = false;
+					m4[m4Num].arg1 = id_T;
+					m4[m4Num].op = expr_E_.front();
+					expr_E_.pop();
+					m4[m4Num].arg2 = expr_E_.front();
+					expr_E_.pop();
+					m4[m4Num].result = "t" + to_string(m4Num);
+					m4Num++;
+				}
+				else {  //  T?  op  arg  T??
+					m4[m4Num].arg1 = m4[m4Num - 1].result;
+					m4[m4Num].op = expr_E_.front();
+					expr_E_.pop();
+					m4[m4Num].arg2 = expr_E_.front();
+					expr_E_.pop();
+					m4[m4Num].result = "t" + to_string(m4Num);
+					m4Num++;
+				}
 			}
-			else {
-				mSiyuanshi[mSiyuanshiNum].arg1 = mSiyuanshi[mSiyuanshiNum - 1].result;
-				mSiyuanshi[mSiyuanshiNum].op = tempH.front();
-				tempH.pop();
-				mSiyuanshi[mSiyuanshiNum].arg2 = tempH.front();
-				tempH.pop();
-				mSiyuanshi[mSiyuanshiNum].result = "T" + to_string(mSiyuanshiNum + 1);
-				mSiyuanshiNum++;
-				temp++;
-			}
+			id_E = m4[m4Num - 1].result;
 		}
-		tempE = mSiyuanshi[mSiyuanshiNum - 1].result;
+		else {
+			id_E = id_T;
+		}
 	}
 	else {
-		tempE = tempF;
+		mFlag = false;
+		cout << "ERROR : 非法表达式" << endl;
 	}
 }
 
-void Analyse::doG(vector<Word>::iterator& i, queue<string>& tempG) {
-
+void Analyse::doE_(vector<Word>::iterator& i, queue<string>& expr_E_) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
 	if (i->getValue() == "+" || i->getValue() == "-") {
-		//cout << word[nowword].oneword << "\t正确！" << endl;
-
-		tempG.push(i->getValue());
-
+		expr_E_.push(i->getValue());
 		i++;
-		string tempE;
-		doE(i, tempE);
-		tempG.push(tempE);
-
-		doG(i, tempG);
-
+		string id_T;
+		doT(i, id_T);
+		expr_E_.push(id_T);
+		doE_(i, expr_E_);
 		return;
 	}
-	else
+	else if (i->getValue() == ")" || i->getValue() == "<" || i->getValue() == ">" || i->getValue() == "}" || i->getValue() == ";") {
 		return;
+	}
+	else {
+		mFlag = false;
+		return;
+	}
 }
 
-void Analyse::doF(vector<Word>::iterator& i, string& tempF) {
-	if (i->getValue() == "(") {
-		//cout << word[nowword].oneword << "\t正确！" << endl;
-		string tempC;
+void Analyse::doT(vector<Word>::iterator& i, string& id_T) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	if (i->getValue() == "(" || i->getType() == Word::IDENTIFIER || i->getType()==Word::CONSTANT) {
+		string id_F;
+		doF(i, id_F);
+		queue<string> expr_T_;
+		doT_(i, expr_T_);
+
+		bool isFirst = true;
+		//拼接id_F和expr_T_
+		if (!expr_T_.empty()) {
+			while (!expr_T_.empty()) {
+				if (isFirst) { // id_F  op  arg  T?
+					isFirst = false;
+					m4[m4Num].arg1 = id_F;
+					m4[m4Num].op = expr_T_.front();
+					expr_T_.pop();
+					m4[m4Num].arg2 = expr_T_.front();
+					expr_T_.pop();
+					m4[m4Num].result = "t" + to_string(m4Num);
+					m4Num++;
+					//temp++;
+				}
+				else {         // T?  op  arg2  T??
+					m4[m4Num].arg1 = m4[m4Num - 1].result;
+					m4[m4Num].op = expr_T_.front();
+					expr_T_.pop();
+					m4[m4Num].arg2 = expr_T_.front();
+					expr_T_.pop();
+					m4[m4Num].result = "t" + to_string(m4Num);
+					m4Num++;
+					//temp++;
+				}
+			}
+			id_T = m4[m4Num - 1].result;
+		}
+		//expr_T_为空
+		else {
+			id_T = id_F;
+		}
+	}
+	else {
+		mFlag = false;
+		cout << "ERROR : 非法表达式" << endl;
+		return;
+	}
+}
+
+void Analyse::doT_(vector<Word>::iterator& i, queue<string>& id_T_) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	if (i->getValue() == "*" || i->getValue() == "/") {
+		id_T_.push(i->getValue());
 		i++;
-		doC(i, tempC);
+		string id_F;
+		doF(i, id_F);
+		id_T_.push(id_F);
+		doT_(i, id_T_);
+		return;
+	}
+	else if (i->getValue() =="+" || i->getValue() == "-" || i->getValue() == ")" || i->getValue() == ">" || i->getValue() == "<" || i->getValue() == "}" || i->getValue() == ";") {
+		return;
+	}
+	else {
+		mFlag = false;
+		return;
+	}
+}
+
+void Analyse::doF(vector<Word>::iterator& i, string& id_F) {
+	if (mFlag == false || i == mWords.end()) {
+		mFlag = false;
+		return;
+	}
+	if (i->getValue() == "(") {
+		string id_E;
+		i++;
+		doE(i, id_E);
 		if (i->getValue() != ")") {
-			cout << "错误：没输入右括号！" << endl;
+			cout << "ERROR : 缺少 ）" << endl;
 			mFlag = false;
 			return;
 		}
 		else {
-			//cout << word[nowword].oneword << "\t正确！" << endl;
-			tempF = tempC;
+			id_F = id_E;
 			i++;
 		}
-
 	}
 	else if (i->getType() == Word::Type::IDENTIFIER || i->getType() == Word::Type::CONSTANT) {
-		//cout << word[nowword].oneword << "\t正确！" << endl;
-
-		tempF = i->getValue();
-
+		id_F = i->getValue();
 		i++;
 	}
 	else {
-
-		cout << "错误：" << (i - 1)->getType() << "：" << (i - 1)->getValue() << " 的后面不能接 " << i->getType() << "：" << i->getValue() << endl;
+		cout << "ERROR : " << (i - 1)->getType() << "：" << (i - 1)->getValue() << " 的后面不能接 " << i->getType() << "：" << i->getValue() << endl;
 		mFlag = false;
-		i++;
-		doF(i, tempF);
+		//i++;
+		//doF(i, tempF);
+		return;
 	}
 }
 
-void Analyse::doH(vector<Word>::iterator& i, queue<string>& tempH) {
-	if (i->getValue() == "*" || i->getValue() == "/") {
-		//cout << word[nowword].oneword << "\t正确！" << endl;
-
-		tempH.push(i->getValue());
-		i++;
-
-		string tempF;
-		doF(i, tempF);
-
-		tempH.push(tempF);
-
-		doH(i, tempH);
-		return;
-	}
-	else
-		return;
-}
 #endif // !DESIGN
 
 
@@ -600,9 +667,11 @@ void Analyse::GrammaticalAnalysis()
 	else {
 		cout << "while循环语句语法错误" << endl;
 	}
-	cout << "四元式：" << endl;
-	for (int i = 0; i <= mSiyuanshiNum; i++) {
-		cout << i << "\t" << mSiyuanshi[i].op << "\t　" << mSiyuanshi[i].arg1 << "\t　" << mSiyuanshi[i].arg2 << "\t　" << mSiyuanshi[i].result << endl;
+	if (mFlag) {
+		cout << "\n-----------------四元式----------------" << endl;
+		for (int i = 0; i <= m4Num; i++) {
+			cout << i << "\t" << m4[i].op << "\t　" << m4[i].arg1 << "\t　" << m4[i].arg2 << "\t　" << m4[i].result << endl;
+		}
 	}
 #endif // !DESIGN
 }
